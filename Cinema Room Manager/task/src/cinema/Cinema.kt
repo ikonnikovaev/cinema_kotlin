@@ -5,14 +5,31 @@ const val CHEAP = 8
 const val SIZE_THRESHOLD = 60
 
 
-fun profit(nRows: Int, seatsPerRow: Int): Int {
+fun statInfo(room: MutableList<MutableList<String>>) {
+    val nRows = room.size
+    val seatsPerRow = room[0].size
     val totalSeats = nRows * seatsPerRow
-    if (totalSeats <= SIZE_THRESHOLD) {
-        return totalSeats * EXPENSIVE
+    var purchasedTickets = 0
+    var currentProfit = 0
+    var possibleProfit = 0
+    for (r in 1..nRows) {
+        for (s in 1..seatsPerRow) {
+            var price = CHEAP
+            if (totalSeats <= SIZE_THRESHOLD || (r <= nRows / 2) ) {
+                price = EXPENSIVE
+            }
+            possibleProfit += price
+            if (room[r - 1][s - 1] == "B") {
+                purchasedTickets += 1
+                currentProfit += price
+            }
+        }
     }
-    val frontHalfSeats = nRows / 2 * seatsPerRow
-    val backHalfSeats = (nRows - nRows / 2) * seatsPerRow
-    return  frontHalfSeats * EXPENSIVE + backHalfSeats * CHEAP
+    val percentage = (purchasedTickets.toDouble() / totalSeats) * 100
+    println("Number of purchased tickets: $purchasedTickets")
+    println("Percentage: ${"%.2f".format(percentage)}%")
+    println("Current income: \$$currentProfit")
+    println("Total income: \$$possibleProfit")
 }
 
 fun buyTicket(room: MutableList<MutableList<String>>) {
@@ -21,17 +38,27 @@ fun buyTicket(room: MutableList<MutableList<String>>) {
     val totalSeats = nRows * seatsPerRow
     var price = CHEAP
 
-    println("Enter a row number:")
-    val row = readln().toInt()
-    println("Enter a seat number in that row:")
-    val seat = readln().toInt()
 
-    if (totalSeats <= SIZE_THRESHOLD || (row <= nRows / 2) ) {
-        price = EXPENSIVE
+    while (true) {
+        println("Enter a row number:")
+        val row = readln().toInt()
+        println("Enter a seat number in that row:")
+        val seat = readln().toInt()
+        if (row <= 0 || row > nRows || seat <= 0 || seat > seatsPerRow) {
+            println("Wrong input!")
+            continue
+        }
+        if (room[row - 1][seat - 1] == "B") {
+            println("That ticket has already been purchased!")
+            continue
+        }
+        if (totalSeats <= SIZE_THRESHOLD || (row <= nRows / 2) ) {
+            price = EXPENSIVE
+        }
+        println("Ticket price: \$${price}")
+        room[row - 1][seat - 1] = "B"
+        break
     }
-
-    println("Ticket price: \$${price}")
-    room[row - 1][seat - 1] = "B"
 }
 
 fun showSeats(room: MutableList<MutableList<String>>) {
@@ -62,12 +89,14 @@ fun main() {
             """
         1. Show the seats
         2. Buy a ticket
+        3. Statistics
         0. Exit""".trimIndent()
         )
         val command = readln().toInt()
         when (command) {
             1 -> showSeats(room)
             2 -> buyTicket(room)
+            3 -> statInfo(room)
             0 -> break
         }
     }
